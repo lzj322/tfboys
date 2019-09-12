@@ -2,8 +2,8 @@ import tensorflow as tf
 import os
 import glob
 import numpy as np
-# import matplotlib.pyplot as plt
-
+import matplotlib.pyplot as plt
+from tensorflow.python import debug as tf_debug
 import cv2 as cv
 
 IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANNEL = 224,224,3
@@ -28,7 +28,7 @@ def parse_example_train(serialized_example):
     example = tf.parse_single_example(serialized_example, features)
     image = tf.decode_raw(example['image'],tf.uint8)
     image = tf.reshape(image, [IMAGE_HEIGHT,IMAGE_WIDTH,IMAGE_CHANNEL])
-    image = tf.cast(image, tf.float32)
+    image = tf.cast(image, tf.float32)/255.0
     label = tf.cast(example['label'],tf.int64)
     example = {'image':image,'label':label}
     return example
@@ -55,14 +55,24 @@ def distorted_input(filename, batch_size):
 
 if __name__ == '__main__':
     dataset = distorted_input(FLAGS.tfrecords_file_name,batch_size=4)
-    iterator = dataset.make_one_shot_iterator()
+    # iterator = dataset.make_one_shot_iterator()
+    iterator = dataset.make_initializable_iterator()
     
     batch_input = iterator.get_next()
     with tf.Session() as sess:
         # sess.run([iterator.initializer])
         i = 0
-        while i<4:
+        sess = tf_debug.LocalCLIDebugWrapperSession(sess)
+        sess.add_tensor_filter("has_inf_or_nan", tf_debug.has_inf_or_nan)
+        sess.run(iterator.initializer)
+        example =  sess.run(batch_input)
+        images, labels = example['image'], example['label']
+        while i<1:
             example =  sess.run(batch_input)
             image, label = example['image'], example['label']
-            print (image.shape,label)
+            for j in range(image.shape[0]):
+                img =image[j,:,:,:]
+                # plt.figure()
+                plt.imshow(img)
+                plt.show()
             i+=1

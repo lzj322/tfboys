@@ -2,9 +2,14 @@ import tensorflow as tf
 import os
 import glob
 import numpy as np
-from param import FLAGS
 import cv2 as cv
 
+
+tf.app.flags.DEFINE_string('input_training_data_path', 'd:/data/catanddog/train', 'training data dir')
+tf.app.flags.DEFINE_string('output_model_path', 'd:/data/catanddog/tfrecords', 'output model dir')
+tf.app.flags.DEFINE_string('tf_name', 'train.tfrecords', 'output filename')
+
+FLAGS = tf.app.flags.FLAGS
 
 rawdata_path = FLAGS.input_training_data_path
 tfrecords_path = FLAGS.output_model_path
